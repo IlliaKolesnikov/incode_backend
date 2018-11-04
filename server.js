@@ -5,6 +5,7 @@ const v4 = require('node-uuid')
 const cors = require('cors')
 const jwt = require('jsonwebtoken')
 const logger = require("morgan");
+const keygen = require("keygenerator");
 const User = require("./user")
 
 
@@ -33,8 +34,20 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cors())
 
+
+
 router.post('/signup', (req, res, next) => {
-    console.log(req.body);
+  console.log(req.body)
+    User.findOne({ name: req.body.username }, (err, user)=>{
+      
+      if(err){
+        return res.status(400).json({error: err.message })
+      }
+      if(user){
+        return res.status(400).json({error: "User is already exist"})
+      }
+      //регистрировать только в том случае, если пользователь ещё не зареган
+      else{
       User.hashPassword(req.body.password, (err, passwordHash) => {
         if (err) {
           return res.status(400).json({ error: err.message })
@@ -43,33 +56,21 @@ router.post('/signup', (req, res, next) => {
         const user = new User({
           name: req.body.username,
           password: req.body.password,
+          isActivated: false,
+          activationKey: keygen._()
         })
   
         user.passwordHash = passwordHash
-    console.log("not started");
         user.save((err, item) => {
-          console.log("privet")
           if (err) {
             return res.status(400).json({ error: err.message })
           }
-          
-          const payload = {
-            _id: item._id,
-            iss: 'http://localhost:3001',
-            permissions: 'poll',
-          }
-          const options = {
-            expiresIn: '7d',
-            jwtid: v4(),
-          }
-          
-          const secret = new Buffer("test", 'base64')
-          jwt.sign(payload, secret, options, (err, token) => {
-            console.log(token)
-            return res.json({ data: token })
-          })
+          console.log(`http://localhost:3000/verify/${req.body.username}/${user.activationKey}`);
+
         })
       })
+    }
+    })
     
   })
 
@@ -82,8 +83,10 @@ router.post('/signin', (req, res, next) => {
           return res.status(400).json({ error: err.message })
         }
         if (!user) {
-          console.log(user)
           return res.status(400).json({ error: 'User not found' })
+        }
+        if(user.isActivated === false){
+          return res.status(400).json({error: "User is not activated"})
         }
         User.comparePasswordAndHash(password, user.passwordHash, (err, areEqual) => {
           if (err) {
@@ -103,7 +106,6 @@ router.post('/signin', (req, res, next) => {
           }
           const secret = new Buffer("test", 'base64')
           jwt.sign(payload, secret, options, (err, token) => {
-            console.log(token)
             return res.json({ data: token })
           })
         })
@@ -111,9 +113,9 @@ router.post('/signin', (req, res, next) => {
     
   })
   
-  
-  // append /api for our http requests
+
+
   app.use("/api", router);
   
-  // launch our backend into a port
+
   app.listen(API_PORT, () => console.log(`LISTENING ON PORT ${API_PORT}`));
