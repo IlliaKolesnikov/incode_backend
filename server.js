@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken')
 const logger = require("morgan");
 const keygen = require("keygenerator");
 const User = require("./user")
+const { check, validationResult } = require('express-validator/check');
 
 
 const API_PORT = 3001;
@@ -34,12 +35,19 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cors())
 
+/*
+ console.log(check.email({name: req.body.username, required: true}))
+  console.log(check.string({name: req.body.password, required: true, min: 1, max: 34}))
+*/
 
-
-router.post('/signup', (req, res, next) => {
+router.post('/signup', [check('username').isEmail()], (req, res, next) => {
   console.log(req.body)
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ error: "Email is not valid" });
+  }
+
     User.findOne({ name: req.body.username }, (err, user)=>{
-      
       if(err){
         return res.status(400).json({error: err.message })
       }
@@ -71,6 +79,7 @@ router.post('/signup', (req, res, next) => {
       })
     }
     })
+  
     
   })
 
@@ -106,11 +115,36 @@ router.post('/signin', (req, res, next) => {
           }
           const secret = new Buffer("test", 'base64')
           jwt.sign(payload, secret, options, (err, token) => {
-            return res.json({ data: token })
+            return res.json({ data: token, mail: user.name })
           })
         })
       })
     
+  })
+
+  router.post('/verify', (req,res,next) =>{
+    User.findOneAndUpdate({name: req.body.username}, {activationKey: "", isActivated: true}, {new: true}, (err, user)=>{
+      if(err){
+       return res.status(400).json({error: err.message})
+      }
+      const payload = {
+        _id: user._id,
+        iss: 'http://localhost:3001',
+        permissions: 'poll',
+      }
+      const options = {
+        expiresIn: '7d',
+        jwtid: v4(),
+      }
+      const secret = new Buffer("test", 'base64')
+      jwt.sign(payload, secret, options, (err, token) => {
+        if(err){
+          return res.status(400).json({error: err.message})
+        }
+        return res.json({ data: token, mail: user.name })
+      })
+
+    })
   })
   
 

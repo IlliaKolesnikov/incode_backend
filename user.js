@@ -1,5 +1,5 @@
 const mongoose = require('mongoose')
-const bcrypt = require('bcrypt')
+const bcrypt = require('bcryptjs')
 var bodyParser = require('body-parser');
 const Schema = mongoose.Schema
 let bcrypt_cost = 12
