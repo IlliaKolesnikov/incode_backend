@@ -6,7 +6,8 @@ const cors = require('cors')
 const jwt = require('jsonwebtoken')
 const logger = require("morgan");
 const keygen = require("keygenerator");
-const User = require("./user")
+const User = require("./models/user")
+const Exercise = require("./models/exercises")
 const { check, validationResult } = require('express-validator/check');
 
 
@@ -41,7 +42,6 @@ app.use(cors())
 */
 
 router.post('/signup', [check('username').isEmail()], (req, res, next) => {
-  console.log(req.body)
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(422).json({ error: "Email is not valid" });
@@ -85,7 +85,6 @@ router.post('/signup', [check('username').isEmail()], (req, res, next) => {
 
 router.post('/signin', (req, res, next) => {
     const password = req.body.password
-   
       User.findOne({ name: req.body.username }, (err, user) => {
         if (err) {
           console.log(JSON.stringify(err))
@@ -110,7 +109,7 @@ router.post('/signin', (req, res, next) => {
             permissions: 'poll',
           }
           const options = {
-            expiresIn: '7d',
+            expiresIn: '1d',
             jwtid: v4(),
           }
           const secret = new Buffer("test", 'base64')
@@ -145,6 +144,40 @@ router.post('/signin', (req, res, next) => {
       })
 
     })
+  })
+
+  router.post("/createexercise", (req,res)=>{
+    const cert = new Buffer("test", 'base64')
+    jwt.verify(req.body.username, cert, { algorithms: ['HS256'] }, function (err, payload) {
+      if(err){
+        res.status(422).json({error: err.message})
+      } // if token alg != RS256,  err == invalid signature
+      else{
+        User.findOne({_id: payload._id}, (err, user)=>{
+          if(err){
+            res.status(422).json({error: err.message})
+          }
+          const exercise = new Exercise({
+            title: req.body.title,
+            measureType: req.body.measureType,
+            user: user._id
+          })
+          Exercise.findOne({ title: 'Gym' }).
+  populate('User').
+  exec(function (err, user) {
+    if (err) return handleError(exercise);
+    console.log('The user is %s', user);
+   
+});
+          exercise.save((err, item)=>{
+            if(err){
+             return res.status(400).json({error: err.message})
+            }
+            return res.json({exercise: item})
+          })
+      })
+      }
+    });
   })
   
 

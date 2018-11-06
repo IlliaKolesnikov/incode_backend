@@ -1,6 +1,5 @@
 const mongoose = require('mongoose')
 const bcrypt = require('bcryptjs')
-var bodyParser = require('body-parser');
 const Schema = mongoose.Schema
 let bcrypt_cost = 12
 
@@ -8,7 +7,8 @@ const userSchema = new Schema({
   name: { type: String, required: true },
   passwordHash: String,
   isActivated: Boolean,
-  activationKey: String
+  activationKey: String,
+  exercises: [{ type: Schema.Types.ObjectId, ref: 'Exercise' }]
 })
 
 userSchema.statics.hashPassword = (passwordRaw, cb) => {
