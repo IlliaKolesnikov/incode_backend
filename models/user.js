@@ -8,7 +8,6 @@ const userSchema = new Schema({
   passwordHash: String,
   isActivated: Boolean,
   activationKey: String,
-  exercises: [{ type: Schema.Types.ObjectId, ref: 'Exercise' }]
 })
 
 userSchema.statics.hashPassword = (passwordRaw, cb) => {
