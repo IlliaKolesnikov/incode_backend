@@ -6,14 +6,14 @@ const cors = require('cors')
 const jwt = require('jsonwebtoken')
 const logger = require("morgan");
 const keygen = require("keygenerator");
-const User = require("./user")
+const User = require("./models/user")
+const Exercise = require("./models/exercises")
 const { check, validationResult } = require('express-validator/check');
 
 
-const API_PORT = 3001;
+const API_PORT = 8080;
 const app = express();
 const router = express.Router();
-
 
 // this is our MongoDB database
 const dbRoute = "mongodb://sprite:Frank764@ds145121.mlab.com:45121/localserver";
@@ -41,7 +41,6 @@ app.use(cors())
 */
 
 router.post('/signup', [check('username').isEmail()], (req, res, next) => {
-  console.log(req.body)
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(422).json({ error: "Email is not valid" });
@@ -85,7 +84,6 @@ router.post('/signup', [check('username').isEmail()], (req, res, next) => {
 
 router.post('/signin', (req, res, next) => {
     const password = req.body.password
-   
       User.findOne({ name: req.body.username }, (err, user) => {
         if (err) {
           console.log(JSON.stringify(err))
@@ -106,22 +104,22 @@ router.post('/signin', (req, res, next) => {
           }
           const payload = {
             _id: user._id,
-            iss: 'http://localhost:3001',
+            iss: 'http://localhost:8080',
             permissions: 'poll',
+            mail: user.name
           }
           const options = {
-            expiresIn: '7d',
+            expiresIn: '1d',
             jwtid: v4(),
           }
           const secret = new Buffer("test", 'base64')
           jwt.sign(payload, secret, options, (err, token) => {
-            return res.json({ data: token, mail: user.name })
+            return res.json({ data: token})
           })
         })
       })
     
   })
-
   router.post('/verify', (req,res,next) =>{
     User.findOneAndUpdate({name: req.body.username}, {activationKey: "", isActivated: true}, {new: true}, (err, user)=>{
       if(err){
@@ -129,7 +127,8 @@ router.post('/signin', (req, res, next) => {
       }
       const payload = {
         _id: user._id,
-        iss: 'http://localhost:3001',
+        mail: user.name,
+        iss: 'http://localhost:8080',
         permissions: 'poll',
       }
       const options = {
@@ -146,8 +145,60 @@ router.post('/signin', (req, res, next) => {
 
     })
   })
-  
+  router.post("/createexercise", (req,res)=>{
+    const cert = new Buffer("test", 'base64')
+    jwt.verify(req.body.token, cert, { algorithms: ['HS256'] }, function (err, payload) {
+      if(err){
+        res.status(422).json({error: err.message})
+      } // if token alg != RS256,  err == invalid signature
+      else{
+        User.findOne({_id: payload._id}, (err, user)=>{
+          if(err){
+            res.status(422).json({error: err.message})
+          }
+          const exercise = new Exercise({
+            title: req.body.title,
+            measureType: req.body.measureType,
+            user: user._id
+          })
+          
+            exercise.save((err, item)=>{
+              if(err){
+               return res.status(400).json({error: err.message})
+              }
+              return res.json({exercise: item})
+            })
+          
+      
+          
+      })
+      }
+    });
+  })
 
+router.post('/editexercise', (req,res)=>{//нужно будет изменить тип запроса, а проверку токена в мидлвар кинуть
+  const cert = new Buffer("test", 'base64')
+  console.log(req.body.token)
+    jwt.verify(req.body.token, cert, { algorithms: ['HS256'] }, function (err, payload) {
+      if(err){
+        res.status(422).json({error: err.message})
+      } // if token alg != RS256,  err == invalid signature
+      else{
+        console.log("token is good")
+        User.findById(payload._id, (err, user)=>{
+          Exercise.find({user: user._id}, (err, exercise)=>{
+            if(err) res.status(505).json({error: err.message})
+            console.log("sending response")
+            res.json({data: exercise})
+          })
+        }
+        )
+        
+        // poka nichego
+      }
+    
+    })
+})
 
   app.use("/api", router);
   
