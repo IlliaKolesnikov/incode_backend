@@ -1,45 +1,11 @@
-const mongoose = require("mongoose");
 const express = require("express");
-const bodyParser = require("body-parser");
-const cors = require('cors')
+const User = require("../models/user")
 const jwt = require('jsonwebtoken')
-const logger = require("morgan");
-const User = require("./models/user")
-const Exercise = require("./models/exercises")
-const sign = require("./routes/sign.js")
-const exercise = require("./routes/exercises.js")
-
-
-const API_PORT = 8080;
-const app = express();
+const v4 = require('node-uuid')
+const keygen = require("keygenerator");
+const { check, validationResult } = require('express-validator/check');
 const router = express.Router();
-
-// this is our MongoDB database
-const dbRoute = "mongodb://sprite:Frank764@ds145121.mlab.com:45121/localserver";
-
-// connects our back end code with the database
-mongoose.connect(
-  dbRoute,
-  { useNewUrlParser: true }
-);
-
-let db = mongoose.connection;
-
-db.once("open", () => console.log("connected to the database"));
-
-// checks if connection with the database is successful
-db.on("error", console.error.bind(console, "MongoDB connection error:"));
-
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
-app.use(cors())
-
-/*
- console.log(check.email({name: req.body.username, required: true}))
-  console.log(check.string({name: req.body.password, required: true, min: 1, max: 34}))
-*/
-
-/*router.post('/signup', [check('username').isEmail()], (req, res, next) => {
+router.post('/signup', [check('username').isEmail()], (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(422).json({ error: "Email is not valid" });
@@ -119,7 +85,6 @@ router.post('/signin', (req, res, next) => {
       })
     
   })
-
   router.post('/verify', (req,res,next) =>{
     User.findOneAndUpdate({name: req.body.username}, {activationKey: "", isActivated: true}, {new: true}, (err, user)=>{
       if(err){
@@ -144,64 +109,6 @@ router.post('/signin', (req, res, next) => {
       })
 
     })
-  })*/
-  /*router.post("/createexercise", (req,res)=>{
-    const cert = new Buffer("test", 'base64')
-    jwt.verify(req.body.token, cert, { algorithms: ['HS256'] }, function (err, payload) {
-      if(err){
-        res.status(422).json({error: err.message})
-      } // if token alg != RS256,  err == invalid signature
-      else{
-        User.findOne({_id: payload._id}, (err, user)=>{
-          if(err){
-            res.status(422).json({error: err.message})
-          }
-          const exercise = new Exercise({
-            title: req.body.title,
-            measureType: req.body.measureType,
-            user: user._id
-          })
-          
-            exercise.save((err, item)=>{
-              if(err){
-               return res.status(400).json({error: err.message})
-              }
-              return res.json({exercise: item})
-            })
-          
-      
-          
-      })
-      }
-    });
   })
 
-router.post('/editexercise', (req,res)=>{//нужно будет изменить тип запроса, а проверку токена в мидлвар кинуть
-  const cert = new Buffer("test", 'base64')
-  console.log(req.body.token)
-    jwt.verify(req.body.token, cert, { algorithms: ['HS256'] }, function (err, payload) {
-      if(err){
-        res.status(422).json({error: err.message})
-      } // if token alg != RS256,  err == invalid signature
-      else{
-        console.log("token is good")
-        User.findById(payload._id, (err, user)=>{
-          Exercise.find({user: user._id}, (err, exercise)=>{
-            if(err) res.status(505).json({error: err.message})
-            console.log("sending response")
-            res.json({data: exercise})
-          })
-        }
-        )
-        
-        // poka nichego
-      }
-    
-    })
-})*/
-
-  app.use("/api", sign);
-  app.use("/api", exercise);
-  
-
-  app.listen(API_PORT, () => console.log(`LISTENING ON PORT ${API_PORT}`));
+module.exports = router
