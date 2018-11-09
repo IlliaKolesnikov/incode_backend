@@ -46,7 +46,7 @@ router.post("/createexercise", (req,res)=>{
         }
         Exercise.find({user: user._id}, (err, exercise)=>{
           if(err) res.status(422).json({error: err.message})
-          res.json({exercise})
+          res.json({exercise})// ???
         })
     })
     }
@@ -59,7 +59,7 @@ router.post("/createexercise", (req,res)=>{
   router.post('/deleteexercise', (req, res)=>{
     
     const {itemToDelete} = req.body
-    console.log(itemToDelete)
+   // console.log(itemToDelete)
     
       User.findById(req.payload._id, (err, user)=>{
         if(err) res.status(422).json({error: err.message})
@@ -70,7 +70,7 @@ router.post("/createexercise", (req,res)=>{
           
           Exercise.find({user: user._id}, (err, exercise)=>{
             if(err) res.status(422).json({error: err.message})
-            console.log(exercise)
+            //console.log(exercise)
           })
       })
       

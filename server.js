@@ -5,11 +5,11 @@ const cors = require('cors')
 const logger = require("morgan");
 const sign = require("./routes/sign.js")
 const exercise = require("./routes/exercises.js")
+const workout = require("./routes/workouts.js")
 
 
 const API_PORT = 8080;
 const app = express();
-const router = express.Router();
 
 // this is our MongoDB database
 const dbRoute = "mongodb://sprite:Frank764@ds145121.mlab.com:45121/localserver";
@@ -33,6 +33,7 @@ app.use(cors())
 
 app.use("/api", sign);
 app.use("/api", exercise);
+app.use("/api", workout);
   
 
 app.listen(API_PORT, () => console.log(`LISTENING ON PORT ${API_PORT}`));
