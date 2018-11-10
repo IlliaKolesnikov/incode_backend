@@ -6,32 +6,24 @@ const router = express.Router();
 
 router.use('/', checkToken)
 router.post("/createexercise", (req,res)=>{
-        User.findById(req.payload._id, (err, user)=>{
-          if(err){
-            res.status(422).json({error: err.message})
-          }
-          if(req.body != null && req.body.measureType != null){
-            Exercise.find({user: user._id}, (err, exercises)=>{
-              if(err) res.status(505).json({error: err.message})
-              const exercise = new Exercise({
-                title: req.body.title,
-                measureType: req.body.measureType,
-                user: user._id,
-                order: exercises.length
-              })
-              exercise.save((err, item)=>{
-                if(err){
-                 return res.status(400).json({error: err.message})
-                }
-                return res.json({exercise: item})
-              })
+       console.log(req.body)
+        Exercise.find({user: req.payload._id}, (err, exercises)=>{
+          if(err) res.status(505).json({error: err.message})
+            const exercise = new Exercise({
+              title: req.body.title,
+              measureType: req.body.measureType,
+              user: req.payload._id,
+              order: exercises.length
             })
-          }
-          else{
-            res.status(422).json({error: "Not enough information."})
-          }
+            exercise.save((err, item)=>{
+              if(err){
+                return res.status(400).json({error: err.message})
+              }
+              return res.json({exercise: item})
+            })
+          })
 
-      })
+     
 });
 
   router.put("/updateexercise", (req,res)=>{
@@ -46,7 +38,7 @@ router.post("/createexercise", (req,res)=>{
         }
         Exercise.find({user: user._id}, (err, exercise)=>{
           if(err) res.status(422).json({error: err.message})
-          res.json({exercise})// ???
+          res.json({exercise})
         })
     })
     }
@@ -55,40 +47,36 @@ router.post("/createexercise", (req,res)=>{
     }
 
   });
-// добавить функцию для пересчета order после удаления
-  router.post('/deleteexercise', (req, res)=>{
-    
+
+  router.post('/deleteexercise', async (req, res)=>{
     const {itemToDelete} = req.body
-   // console.log(itemToDelete)
-    
-      User.findById(req.payload._id, (err, user)=>{
-        if(err) res.status(422).json({error: err.message})
-          Exercise.findByIdAndDelete(itemToDelete._id, (err, exercise)=>{
-              if(err)res.status(422).json({error: err.message})
-              //console.log(exercise);
-            });
-          
-          Exercise.find({user: user._id}, (err, exercise)=>{
-            if(err) res.status(422).json({error: err.message})
-            //console.log(exercise)
-          })
-      })
+
+    Exercise.deleteOne({_id: itemToDelete._id}, (err, exercise)=>{
+      if(err)res.status(422).json({error: err.message})
+    });
+    var array = await Exercise.find({user: req.payload._id}).sort({order: 1})
+    array.map((item, index)=>{
+        Exercise.findByIdAndUpdate ( item._id, {order: index}, (err) => {
+      if (err) res.status(422).json({error: err.message }) })
+    })
+      res.json("DELETED");
+      Exercise.find({user: req.payload._id}).sort({order: 1}).exec( (err, item)=>{
+      console.log("arr for each result", item)
+      
+    })
       
      
   })
   
 router.post('/editexercise', (req,res)=>{
         console.log("token is good")
-        User.findById(req.payload._id, (err, user)=>{
-          if(err) res.status(407).json({error: err.message})
-          Exercise.find({user: user._id}).sort({order: 1}).exec( (err, exercise)=>{
-            
+          Exercise.find({user: req.payload._id}).sort({order: 1}).exec( (err, exercise)=>{
             if(err) res.status(505).json({error: err.message})
             console.log("sending response")
             res.json({data: exercise})
           })
           
-        })  
-    })
+          
+})
 
 module.exports = router
