@@ -4,8 +4,9 @@ const Schema = mongoose.Schema
 
 const valuesOfExercise = new Schema({
   exercise: {type: Schema.Types.ObjectId, ref: "Exercise"},
-  repeats: Number,
-  measure: Number
+  repeats: {type: Number, required: true},
+  measure: {type: Number, required: true},
+  order: {type: Number}
 })
 const workoutSchema = new Schema({
   user: { type: Schema.Types.ObjectId, ref: "User" },
@@ -15,4 +16,5 @@ const workoutSchema = new Schema({
 
 const Workout = mongoose.model("Workout", workoutSchema);
 
-module.exports = Workout
+
+module.exports = Workout 
