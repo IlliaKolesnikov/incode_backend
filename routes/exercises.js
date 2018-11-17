@@ -6,7 +6,6 @@ const router = express.Router();
 
 router.use('/', checkToken)
 router.post("/createexercise", (req,res)=>{
-       console.log(req.body)
         Exercise.find({user: req.payload._id}, (err, exercises)=>{
           if(err) res.status(505).json({error: err.message})
             const exercise = new Exercise({
@@ -17,6 +16,7 @@ router.post("/createexercise", (req,res)=>{
             })
             exercise.save((err, item)=>{
               if(err){
+                console.log(err.message)
                 return res.status(400).json({error: err.message})
               }
               return res.json({exercise: item})
@@ -33,7 +33,8 @@ router.post("/createexercise", (req,res)=>{
       if(err) res.status(422).json({error: err.message})
       for (const { _id, title, measureType, order } of newArray) {
         Exercise.findByIdAndUpdate(_id, 
-          { title: title, measureType: measureType, order: order } , {new:true}, (err, exercise)=>{
+          { title: title, measureType: measureType, order: order }, (err, exercise)=>{
+            if(err) console.log(err.message)
           });
         }
         Exercise.find({user: user._id}, (err, exercise)=>{
@@ -68,8 +69,10 @@ router.post("/createexercise", (req,res)=>{
      
   })
   
-router.post('/editexercise', (req,res)=>{
+router.get('/editexercise', (req,res)=>{
         console.log("token is good")
+        console.log(req.payload)
+        //console.log(req.payload._id)
           Exercise.find({user: req.payload._id}).sort({order: 1}).exec( (err, exercise)=>{
             if(err) res.status(505).json({error: err.message})
             console.log("sending response")

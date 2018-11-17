@@ -12,8 +12,7 @@ const API_PORT = 8080;
 const app = express();
 
 // this is our MongoDB database
-const dbRoute = "mongodb://incode_server:incode1@ds157503.mlab.com:57503/incode_server";
-
+const dbRoute = "mongodb://incode_internship:incode1@ds155653.mlab.com:55653/upgradeincode";
 // connects our back end code with the database
 mongoose.connect(
   dbRoute,
